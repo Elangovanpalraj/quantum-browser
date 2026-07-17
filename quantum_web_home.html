@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quantum — New Tab</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b0d10">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Quantum">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0b0d10;
+    --panel: #15181c;
+    --panel-2: #1c2025;
+    --border: #2a2e34;
+    --silver: #d8dbe0;
+    --silver-dim: #9aa0aa;
+    --text: #eceef1;
+    --text-dim: #8b9099;
+    --violet: #7c6cff;
+    --violet-dim: #5b4fd6;
+    --cyan: #5ee8d5;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background: radial-gradient(1200px 700px at 50% -10%, #171a20 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    overflow-x:hidden;
+    min-height:100vh;
+  }
+  ::selection{ background: var(--violet); color:#fff; }
+
+  /* ---------- Browser chrome ---------- */
+  .chrome{
+    display:flex;
+    flex-direction:column;
+    border-bottom:1px solid var(--border);
+    background: linear-gradient(180deg, #101317 0%, #0d0f13 100%);
+  }
+  .tabstrip{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:10px 12px 0 12px;
+  }
+  .tab{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 14px;
+    background: var(--panel);
+    border:1px solid var(--border);
+    border-bottom:none;
+    border-radius:10px 10px 0 0;
+    font-size:13px;
+    color:var(--silver);
+    max-width:200px;
+  }
+  .tab .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:linear-gradient(135deg,var(--cyan),var(--violet));
+    flex-shrink:0;
+  }
+  .newtab-btn{
+    width:30px;height:30px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:8px;
+    color:var(--text-dim);
+    font-size:18px;
+    cursor:pointer;
+    transition:.15s;
+    background:transparent;
+    border:none;
+  }
+  .newtab-btn:hover{ background:var(--panel); color:var(--text); }
+
+  .toolbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 14px;
+    background: var(--panel);
+  }
+  .nav-icons{ display:flex; gap:4px; }
+  .icon-btn{
+    width:32px;height:32px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:8px;
+    color:var(--text-dim);
+    cursor:pointer;
+    border:none;background:transparent;
+    transition:.15s;
+  }
+  .icon-btn:hover{ background:var(--panel-2); color:var(--silver); }
+  .icon-btn svg{ width:17px; height:17px; }
+
+  .addressbar{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background: var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:8px 16px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    color: var(--text-dim);
+    transition:.15s;
+  }
+  .addressbar:focus-within{
+    border-color: var(--violet-dim);
+    box-shadow: 0 0 0 3px rgba(124,108,255,.15);
+  }
+  .addressbar svg{ width:14px; height:14px; flex-shrink:0; opacity:.7; }
+  .addressbar input{
+    flex:1;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:var(--silver);
+    font-family:inherit;
+    font-size:13px;
+  }
+  .addressbar input::placeholder{ color:var(--text-dim); }
+
+  .toolbar-right{ display:flex; gap:2px; align-items:center; }
+
+  /* ---------- Layout: sidebar + main ---------- */
+  .layout{
+    display:flex;
+    min-height: 100vh;
+  }
+
+  .sidebar{
+    width:250px;
+    flex-shrink:0;
+    border-right:1px solid var(--border);
+    background: #0d0f13;
+    padding:18px 12px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .sidebar-title{
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    padding:6px 10px 10px 10px;
+  }
+  .quantum-ai-entry{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px;
+    margin-bottom:10px;
+    border-radius:12px;
+    text-decoration:none;
+    background: linear-gradient(90deg, rgba(124,108,255,.18), rgba(94,232,213,.08));
+    border:1px solid rgba(124,108,255,.35);
+    transition:.15s;
+  }
+  .quantum-ai-entry:hover{
+    border-color: var(--violet);
+    transform: translateY(-1px);
+  }
+  .qai-icon{
+    width:30px;height:30px;
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background: linear-gradient(135deg, var(--violet), var(--cyan));
+    flex-shrink:0;
+  }
+  .qai-icon svg{ width:16px;height:16px; color:#0b0d10; }
+  .qai-title{ font-size:13.5px; font-weight:600; color:#fff; }
+  .qai-sub{ font-size:10.5px; color:var(--text-dim); margin-top:1px; }
+  .cat{
+    border-radius:10px;
+    overflow:hidden;
+  }
+  .cat-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 10px;
+    cursor:pointer;
+    border-radius:10px;
+    transition:.15s;
+    font-size:13.5px;
+    color:var(--silver);
+  }
+  .cat-head:hover{ background: var(--panel); }
+  .cat.active .cat-head{
+    background: linear-gradient(90deg, rgba(124,108,255,.16), transparent);
+    color:#fff;
+  }
+  .cat-head .swatch{
+    width:26px;height:26px;
+    border-radius:7px;
+    display:flex;align-items:center;justify-content:center;
+    background: var(--panel-2);
+    flex-shrink:0;
+  }
+  .cat-head .swatch svg{ width:14px; height:14px; color:var(--cyan); }
+  .cat-head .chev{
+    margin-left:auto;
+    width:14px;height:14px;
+    color:var(--text-dim);
+    transition:transform .2s;
+  }
+  .cat.open .chev{ transform:rotate(90deg); }
+  .cat-body{
+    max-height:0;
+    overflow:hidden;
+    transition: max-height .22s ease;
+    padding-left:44px;
+  }
+  .cat.open .cat-body{ max-height:120px; }
+  .cat-body a{
+    display:block;
+    padding:7px 8px;
+    font-size:12.5px;
+    color:var(--text-dim);
+    text-decoration:none;
+    border-radius:6px;
+  }
+  .cat-body a:hover{ color:var(--silver); background:var(--panel); }
+
+  .realmode{
+    margin-top:14px;
+    padding:12px;
+    border-radius:12px;
+    background: linear-gradient(145deg, rgba(94,232,213,.08), rgba(124,108,255,.06));
+    border:1px solid var(--border);
+  }
+  .realmode-top{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:6px;
+  }
+  .realmode-label{
+    font-size:12.5px; font-weight:600; color:var(--silver);
+    display:flex; align-items:center; gap:6px;
+  }
+  .realmode-label svg{ width:14px; height:14px; color:var(--cyan); }
+  .switch{
+    width:34px; height:19px;
+    background:var(--panel-2);
+    border-radius:999px;
+    position:relative;
+    cursor:pointer;
+    border:1px solid var(--border);
+    flex-shrink:0;
+  }
+  .switch.on{ background: linear-gradient(90deg, var(--violet-dim), var(--cyan)); }
+  .switch::after{
+    content:'';
+    position:absolute;
+    top:2px; left:2px;
+    width:13px; height:13px;
+    border-radius:50%;
+    background:#fff;
+    transition:.2s;
+  }
+  .switch.on::after{ left:17px; }
+  .realmode-desc{
+    font-size:11px;
+    line-height:1.5;
+    color:var(--text-dim);
+  }
+
+  /* ---------- Main / hero ---------- */
+  .main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:70px 24px 40px;
+  }
+
+  .logo-wrap{
+    position:relative;
+    width:120px;height:120px;
+    margin-bottom:22px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .orbit{
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    border:1px solid rgba(124,108,255,.35);
+    animation: spin 12s linear infinite;
+  }
+  .orbit.o2{
+    inset:-14px;
+    border-color: rgba(94,232,213,.22);
+    animation-duration: 18s;
+    animation-direction: reverse;
+  }
+  @keyframes spin{ from{transform:rotate(0)} to{transform:rotate(360deg)} }
+  @media (prefers-reduced-motion: reduce){ .orbit{ animation:none; } }
+
+  .brand-name{
+    font-size:34px;
+    font-weight:700;
+    letter-spacing:-.02em;
+    margin-bottom:34px;
+    background: linear-gradient(135deg, var(--silver) 20%, var(--violet) 60%, var(--cyan) 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+
+  .search-box{
+    width:100%;
+    max-width:620px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background: var(--panel);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:15px 22px;
+    transition:.15s;
+  }
+  .search-box:focus-within{
+    border-color: var(--violet-dim);
+    box-shadow: 0 0 0 4px rgba(124,108,255,.14), 0 8px 30px -10px rgba(124,108,255,.35);
+  }
+  .search-box svg.search-icon{ width:18px;height:18px; color:var(--text-dim); flex-shrink:0; }
+  .search-box input{
+    flex:1;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:var(--text);
+    font-size:15.5px;
+    font-family:'Space Grotesk', sans-serif;
+  }
+  .search-box input::placeholder{ color:var(--text-dim); }
+  .mic-btn{
+    width:34px;height:34px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background: var(--panel-2);
+    border:none;
+    cursor:pointer;
+    color:var(--cyan);
+    flex-shrink:0;
+    transition:.15s;
+  }
+  .mic-btn:hover{ background: rgba(94,232,213,.14); }
+  .mic-btn svg{ width:16px;height:16px; }
+
+  .shortcuts{
+    display:flex;
+    gap:20px;
+    margin-top:38px;
+    flex-wrap:wrap;
+    justify-content:center;
+    max-width:640px;
+  }
+  .shortcut{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    width:76px;
+    cursor:pointer;
+  }
+  .shortcut .tile{
+    width:52px;height:52px;
+    border-radius:14px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    transition:.15s;
+  }
+  .shortcut:hover .tile{ border-color:var(--violet-dim); transform:translateY(-2px); }
+  .shortcut .tile svg{ width:20px;height:20px; color:var(--silver-dim); }
+  .shortcut span{ font-size:11px; color:var(--text-dim); text-align:center; }
+  .shortcut.add .tile{ border-style:dashed; color:var(--text-dim); }
+  .shortcut.add .tile svg{ color:var(--text-dim); }
+
+  @media (max-width: 760px){
+    .sidebar{ display:none; }
+    .brand-name{ font-size:26px; }
+  }
+
+  /* ---------- Splash / launcher screen ---------- */
+  .splash{
+    position:fixed;
+    inset:0;
+    z-index:50;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:22px;
+    background: radial-gradient(1200px 700px at 50% 40%, #171a20 0%, var(--bg) 60%);
+    cursor:pointer;
+    transition: opacity .5s ease, visibility .5s;
+  }
+  .splash.hide{
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+  }
+  .splash-logo-wrap{
+    position:relative;
+    width:160px;height:160px;
+    display:flex;align-items:center;justify-content:center;
+    transition: transform .35s ease;
+  }
+  .splash:hover .splash-logo-wrap{ transform: scale(1.05); }
+  .splash .orbit{ width:100%; height:100%; }
+  .splash .orbit.o2{ width:calc(100% + 28px); height:calc(100% + 28px); }
+  .splash-hint{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:.08em;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:.55} 50%{opacity:1} }
+  .app-body{
+    opacity:0;
+    transition: opacity .4s ease .1s;
+  }
+  .app-body.show{ opacity:1; }
+</style>
+</head>
+<body>
+
+  <div class="splash hide" id="splash">
+    <div class="splash-logo-wrap">
+      <div class="orbit"></div>
+      <div class="orbit o2"></div>
+      <svg width="88" height="88" viewBox="0 0 100 100">
+        <defs>
+          <linearGradient id="qMetalSplash" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f4f5f7"/>
+            <stop offset="35%" stop-color="#c7cbd2"/>
+            <stop offset="55%" stop-color="#8b909a"/>
+            <stop offset="75%" stop-color="#d8dbe0"/>
+            <stop offset="100%" stop-color="#eef0f2"/>
+          </linearGradient>
+          <linearGradient id="qSwooshSplash" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#7c6cff"/>
+            <stop offset="100%" stop-color="#5ee8d5"/>
+          </linearGradient>
+        </defs>
+        <circle cx="48" cy="48" r="30" fill="none" stroke="url(#qMetalSplash)" stroke-width="13"/>
+        <line x1="66" y1="66" x2="80" y2="80" stroke="url(#qMetalSplash)" stroke-width="10" stroke-linecap="round"/>
+        <path d="M10 62 Q48 78 92 50" fill="none" stroke="url(#qSwooshSplash)" stroke-width="4.5" stroke-linecap="round" opacity="0.9"/>
+      </svg>
+    </div>
+    <div class="splash-hint">Click the logo to open Quantum</div>
+  </div>
+
+  <div class="app-body show" id="appBody">
+  <div class="chrome" style="display:flex; justify-content:flex-end; padding:10px 20px;">
+    <span style="font-size:12.5px; color:var(--text-dim); display:flex; align-items:center; gap:14px;">
+      {{ user_email }}
+      <a href="/logout" style="color:var(--violet); text-decoration:none; font-weight:600;">Logout</a>
+    </span>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="/ai" class="quantum-ai-entry" id="quantumAiEntry">
+        <div class="qai-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z"/></svg>
+        </div>
+        <div class="qai-text">
+          <div class="qai-title">Quantum AI</div>
+          <div class="qai-sub">Chat, files &amp; more</div>
+        </div>
+      </a>
+
+      <div class="sidebar-title">AI Tools</div>
+
+      <div class="cat open" data-cat>
+        <div class="cat-head">
+          <div class="swatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z"/></svg></div>
+          All AI Tools
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="cat-body"><a href="#">Browse all tools</a><a href="#">Trending this week</a></div>
+      </div>
+
+      <div class="cat" data-cat>
+        <div class="cat-head">
+          <div class="swatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 12a4 4 0 108 0 4 4 0 00-8 0zM12 2v2M12 20v2M2 12h2M20 12h2"/></svg></div>
+          Roleplay AI
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="cat-body"><a href="#">All roleplay tools</a></div>
+      </div>
+
+      <div class="cat" data-cat>
+        <div class="cat-head">
+          <div class="swatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 4l-6 8 6 8M16 4l6 8-6 8"/></svg></div>
+          Coding AI
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="cat-body"><a href="#">All coding tools</a></div>
+      </div>
+
+      <div class="cat" data-cat>
+        <div class="cat-head">
+          <div class="swatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M8 16h5"/></svg></div>
+          Status AI
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="cat-body"><a href="#">All status tools</a></div>
+      </div>
+
+      <div class="cat" data-cat>
+        <div class="cat-head">
+          <div class="swatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5-4 4-3-3-6 6"/></svg></div>
+          Image AI
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="cat-body"><a href="#">All image tools</a></div>
+      </div>
+
+      <div class="cat" data-cat>
+        <div class="cat-head">
+          <div class="swatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M17 9l4-3v12l-4-3"/></svg></div>
+          Video AI
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="cat-body"><a href="#">All video tools</a></div>
+      </div>
+
+      <div class="cat" data-cat>
+        <div class="cat-head">
+          <div class="swatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg></div>
+          Resume AI
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="cat-body"><a href="#">All resume tools</a></div>
+      </div>
+
+      <div class="realmode">
+        <div class="realmode-top">
+          <div class="realmode-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+            YouTube — Real Mode
+          </div>
+          <div class="switch on" id="realSwitch"></div>
+        </div>
+        <div class="realmode-desc">AI-generated / fake videos-ஐ filter பண்ணி, verified real videos மட்டும் காட்டும்.</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="logo-wrap">
+        <div class="orbit"></div>
+        <div class="orbit o2"></div>
+        <svg width="72" height="72" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="qMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f4f5f7"/>
+              <stop offset="35%" stop-color="#c7cbd2"/>
+              <stop offset="55%" stop-color="#8b909a"/>
+              <stop offset="75%" stop-color="#d8dbe0"/>
+              <stop offset="100%" stop-color="#eef0f2"/>
+            </linearGradient>
+            <linearGradient id="qSwoosh" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#7c6cff"/>
+              <stop offset="100%" stop-color="#5ee8d5"/>
+            </linearGradient>
+          </defs>
+          <circle cx="48" cy="48" r="30" fill="none" stroke="url(#qMetal)" stroke-width="13"/>
+          <line x1="66" y1="66" x2="80" y2="80" stroke="url(#qMetal)" stroke-width="10" stroke-linecap="round"/>
+          <path d="M10 62 Q48 78 92 50" fill="none" stroke="url(#qSwoosh)" stroke-width="4.5" stroke-linecap="round" opacity="0.9"/>
+        </svg>
+      </div>
+
+      <div class="brand-name">Quantum</div>
+
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input type="text" placeholder="Ask Quantum anything…">
+        <button class="mic-btn" title="Voice search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 00-3 3v6a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v1a7 7 0 01-14 0v-1M12 18v4"/></svg>
+        </button>
+      </div>
+
+      <div class="shortcuts">
+        <div class="shortcut">
+          <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 4l-6 8 6 8M16 4l6 8-6 8"/></svg></div>
+          <span>Coding AI</span>
+        </div>
+        <div class="shortcut">
+          <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5-4 4-3-3-6 6"/></svg></div>
+          <span>Image AI</span>
+        </div>
+        <div class="shortcut">
+          <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="14" height="14" rx="2"/><path d="M17 9l4-3v12l-4-3"/></svg></div>
+          <span>Video AI</span>
+        </div>
+        <div class="shortcut">
+          <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg></div>
+          <span>Resume AI</span>
+        </div>
+        <div class="shortcut add">
+          <div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+          <span>Add shortcut</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  </div><!-- /app-body -->
+
+<script>
+  // Splash logo click -> open Quantum Browser
+  document.getElementById('splash').addEventListener('click', function(){
+    this.classList.add('hide');
+    document.getElementById('appBody').classList.add('show');
+  });
+
+  document.querySelectorAll('[data-cat] .cat-head').forEach(head=>{
+    head.addEventListener('click', ()=>{
+      head.parentElement.classList.toggle('open');
+    });
+  });
+  document.getElementById('realSwitch').addEventListener('click', function(){
+    this.classList.toggle('on');
+  });
+
+  // ---- Real navigation / search ----
+  function looksLikeUrl(text){
+    const t = text.trim();
+    if (/^https?:\/\//i.test(t)) return true;
+    // has a dot, no spaces, plausible domain e.g. google.com, w3schools.com
+    if (/^[a-z0-9-]+(\.[a-z0-9-]+)+([/?#].*)?$/i.test(t) && !t.includes(' ')) return true;
+    return false;
+  }
+
+  function goToQuery(rawText){
+    const text = rawText.trim();
+    if (!text) return;
+    if (looksLikeUrl(text)) {
+      const url = /^https?:\/\//i.test(text) ? text : 'https://' + text;
+      window.open(url, '_blank');
+    } else {
+      window.open('https://www.google.com/search?q=' + encodeURIComponent(text), '_blank');
+    }
+  }
+
+  const addressInput = document.querySelector('.addressbar input');
+  if (addressInput){
+    addressInput.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter') goToQuery(addressInput.value);
+    });
+  }
+
+  const searchInput = document.querySelector('.search-box input');
+  if (searchInput){
+    searchInput.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter') goToQuery(searchInput.value);
+    });
+  }
+
+  const searchIconBtn = document.querySelector('.search-box .search-icon');
+  if (searchIconBtn){
+    searchIconBtn.style.cursor = 'pointer';
+    searchIconBtn.addEventListener('click', ()=> goToQuery(searchInput.value));
+  }
+</script>
+
+</body>
+</html>

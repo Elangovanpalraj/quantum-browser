@@ -1,0 +1,7 @@
+flask
+groq
+gunicorn
+werkzeug
+pymupdf
+pandas
+pillow
