@@ -489,6 +489,16 @@
         </div>
       </a>
 
+      <a href="/library" class="quantum-ai-entry" id="libraryEntry" style="margin-top:8px;">
+        <div class="qai-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <div class="qai-text">
+          <div class="qai-title">Library</div>
+          <div class="qai-sub">Bookmarks, history &amp; searches</div>
+        </div>
+      </a>
+
       <div class="sidebar-title">AI Tools</div>
 
       <div class="cat open" data-cat>
@@ -652,14 +662,27 @@
     return false;
   }
 
+  function logHistory(title, url){
+    fetch('/api/history', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({title: title, url: url})}).catch(()=>{});
+  }
+  function logSearch(query){
+    fetch('/api/saved_searches', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({query: query})}).catch(()=>{});
+  }
+
   function goToQuery(rawText){
     const text = rawText.trim();
     if (!text) return;
     if (looksLikeUrl(text)) {
       const url = /^https?:\/\//i.test(text) ? text : 'https://' + text;
+      logHistory(text, url);
       window.open(url, '_blank');
     } else {
-      window.open('https://www.google.com/search?q=' + encodeURIComponent(text), '_blank');
+      const url = 'https://www.google.com/search?q=' + encodeURIComponent(text);
+      logHistory('Search: ' + text, url);
+      logSearch(text);
+      window.open(url, '_blank');
     }
   }
 
