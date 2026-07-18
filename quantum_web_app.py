@@ -69,9 +69,14 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DB_PATH = os.path.join(BASE_DIR, "quantum_users.db")
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
-GROQ_MODEL = "llama-3.3-70b-versatile"
-GROQ_VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
+# 2026-ல Groq recommend pandra powerful, latest models (free tier-lyum kidaikkum):
+#   - openai/gpt-oss-120b : best general reasoning/chat model on Groq right now
+#   - meta-llama/llama-4-scout-17b-16e-instruct : vision (image understanding) model
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+GROQ_VISION_MODEL = os.environ.get("GROQ_VISION_MODEL", "meta-llama/llama-4-scout-17b-16e-instruct")
 groq_client = Groq(api_key=GROQ_API_KEY) if (Groq and GROQ_API_KEY) else None
+APP_VERSION = "1.1"  # ivvalavu update aagum bothum idha increase pannunga
+GITHUB_REPO = "Elangovanpalraj/quantum-browser"
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
@@ -124,6 +129,32 @@ def init_db():
             user_id INTEGER NOT NULL,
             role TEXT NOT NULL,
             content TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS bookmarks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            url TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS browse_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            url TEXT NOT NULL,
+            visited_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS saved_searches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            query TEXT NOT NULL,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     """)
@@ -390,6 +421,188 @@ DOWNLOAD_HTML = """<!DOCTYPE html>
 @app.route("/download")
 def download():
     return render_template_string(DOWNLOAD_HTML, download_url=GITHUB_RELEASE_URL)
+
+
+# ---------------------------------------------------------------- Auto-update check
+@app.route("/api/check_update")
+def check_update():
+    """Desktop .exe idha hit panni, pudhu version irukka nu check pannikkalam."""
+    import urllib.request, json as _json
+    try:
+        req = urllib.request.Request(
+            f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest",
+            headers={"Accept": "application/vnd.github+json"}
+        )
+        with urllib.request.urlopen(req, timeout=6) as resp:
+            data = _json.loads(resp.read().decode("utf-8"))
+        latest_tag = (data.get("tag_name") or "").lstrip("v")
+        download_url = data.get("html_url", GITHUB_RELEASE_URL)
+        return jsonify({
+            "current_version": APP_VERSION,
+            "latest_version": latest_tag,
+            "update_available": latest_tag != "" and latest_tag != APP_VERSION,
+            "download_url": download_url,
+        })
+    except Exception as e:
+        return jsonify({"current_version": APP_VERSION, "update_available": False, "error": str(e)})
+
+
+# ---------------------------------------------------------------- Bookmarks / History / Saved Searches
+@app.route("/api/bookmarks", methods=["GET", "POST"])
+@login_required
+def bookmarks():
+    uid = session["user_id"]
+    db = get_db()
+    if request.method == "POST":
+        data = request.get_json(force=True, silent=True) or {}
+        title = (data.get("title") or "Untitled").strip()
+        url = (data.get("url") or "").strip()
+        if not url:
+            return jsonify({"success": False, "error": "url required"}), 400
+        db.execute("INSERT INTO bookmarks (user_id, title, url) VALUES (?, ?, ?)", (uid, title, url))
+        db.commit()
+        return jsonify({"success": True})
+    rows = db.execute(
+        "SELECT id, title, url, created_at FROM bookmarks WHERE user_id=? ORDER BY id DESC", (uid,)
+    ).fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/bookmarks/<int:bid>", methods=["DELETE"])
+@login_required
+def delete_bookmark(bid):
+    db = get_db()
+    db.execute("DELETE FROM bookmarks WHERE id=? AND user_id=?", (bid, session["user_id"]))
+    db.commit()
+    return jsonify({"success": True})
+
+
+@app.route("/api/history", methods=["GET", "POST"])
+@login_required
+def history():
+    uid = session["user_id"]
+    db = get_db()
+    if request.method == "POST":
+        data = request.get_json(force=True, silent=True) or {}
+        title = (data.get("title") or "Untitled").strip()
+        url = (data.get("url") or "").strip()
+        if not url:
+            return jsonify({"success": False, "error": "url required"}), 400
+        db.execute("INSERT INTO browse_history (user_id, title, url) VALUES (?, ?, ?)", (uid, title, url))
+        db.commit()
+        return jsonify({"success": True})
+    rows = db.execute(
+        "SELECT id, title, url, visited_at FROM browse_history WHERE user_id=? ORDER BY id DESC LIMIT 100",
+        (uid,)
+    ).fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+@app.route("/api/history/clear", methods=["POST"])
+@login_required
+def clear_history():
+    db = get_db()
+    db.execute("DELETE FROM browse_history WHERE user_id=?", (session["user_id"],))
+    db.commit()
+    return jsonify({"success": True})
+
+
+@app.route("/api/saved_searches", methods=["GET", "POST"])
+@login_required
+def saved_searches():
+    uid = session["user_id"]
+    db = get_db()
+    if request.method == "POST":
+        data = request.get_json(force=True, silent=True) or {}
+        query = (data.get("query") or "").strip()
+        if not query:
+            return jsonify({"success": False, "error": "query required"}), 400
+        db.execute("INSERT INTO saved_searches (user_id, query) VALUES (?, ?)", (uid, query))
+        db.commit()
+        return jsonify({"success": True})
+    rows = db.execute(
+        "SELECT id, query, created_at FROM saved_searches WHERE user_id=? ORDER BY id DESC", (uid,)
+    ).fetchall()
+    return jsonify([dict(r) for r in rows])
+
+
+LIBRARY_HTML = """<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Quantum Library</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{ --bg:#0b0d10; --panel:#15181c; --panel2:#1c2025; --border:#2a2e34;
+    --text:#eceef1; --dim:#8b9099; --violet:#7c6cff; --cyan:#5ee8d5; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{ background:radial-gradient(1200px 700px at 50% -10%, #171a20 0%, var(--bg) 55%);
+    color:var(--text); font-family:'Segoe UI',sans-serif; min-height:100vh; padding:0 0 60px; }
+  header{ padding:18px 28px; border-bottom:1px solid var(--border); display:flex;
+    align-items:center; gap:10px; background:#101317; position:sticky; top:0; z-index:5; }
+  header .dot{ width:10px;height:10px;border-radius:50%; background:linear-gradient(135deg,var(--cyan),var(--violet)); }
+  header h1{ font-size:16px; font-weight:600; }
+  header a{ margin-left:auto; color:var(--dim); font-size:13px; text-decoration:none; }
+  header a:hover{ color:var(--text); }
+  .tabs{ display:flex; gap:8px; padding:20px 28px 0; }
+  .tab{ padding:9px 18px; border-radius:999px; background:var(--panel2); border:1px solid var(--border);
+    font-size:13.5px; cursor:pointer; color:var(--dim); }
+  .tab.active{ background:linear-gradient(135deg,var(--violet),var(--cyan)); color:#0b0d10; font-weight:700; border:none; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; padding:22px 28px; }
+  .card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:18px;
+    opacity:0; transform:translateY(14px); animation:rise .45s ease forwards; position:relative; }
+  .card:nth-child(n){ animation-delay:calc(var(--i,0) * 0.04s); }
+  @keyframes rise{ to{ opacity:1; transform:translateY(0); } }
+  .card:hover{ border-color:var(--violet); transform:translateY(-3px); transition:.2s; }
+  .card .t{ font-weight:600; font-size:14.5px; margin-bottom:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .card .u{ color:var(--cyan); font-size:12px; text-decoration:none; word-break:break-all; }
+  .card .d{ color:var(--dim); font-size:11px; margin-top:10px; }
+  .card .x{ position:absolute; top:10px; right:12px; color:var(--dim); cursor:pointer; font-weight:700; }
+  .empty{ color:var(--dim); padding:60px 28px; text-align:center; font-size:14px; }
+</style></head>
+<body>
+  <header><span class="dot"></span><h1>Quantum Library</h1><a href="/">&larr; Back to Quantum</a></header>
+  <div class="tabs">
+    <div class="tab active" data-tab="bookmarks">⭐ Bookmarks</div>
+    <div class="tab" data-tab="history">🕘 History</div>
+    <div class="tab" data-tab="searches">🔍 Saved Searches</div>
+  </div>
+  <div class="grid" id="grid"></div>
+<script>
+  const grid=document.getElementById('grid'), tabs=document.querySelectorAll('.tab');
+  let current='bookmarks';
+  async function load(tab){
+    current=tab;
+    tabs.forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
+    const endpoint = tab==='bookmarks'?'/api/bookmarks': tab==='history'?'/api/history':'/api/saved_searches';
+    const res=await fetch(endpoint); const items=await res.json();
+    grid.innerHTML='';
+    if(!items.length){ grid.innerHTML='<div class="empty">Innum onnum illa இங்க.</div>'; return; }
+    items.forEach((it,i)=>{
+      const c=document.createElement('div'); c.className='card'; c.style.setProperty('--i',i);
+      if(tab==='searches'){
+        c.innerHTML = `<div class="t">${it.query}</div><div class="d">${it.created_at}</div>
+          <span class="x" data-id="${it.id}">✕</span>`;
+      } else {
+        const dateField = tab==='bookmarks' ? it.created_at : it.visited_at;
+        c.innerHTML = `<div class="t">${it.title}</div><a class="u" href="${it.url}" target="_blank">${it.url}</a>
+          <div class="d">${dateField}</div><span class="x" data-id="${it.id}">✕</span>`;
+      }
+      grid.appendChild(c);
+    });
+    grid.querySelectorAll('.x').forEach(x=>x.addEventListener('click', async ()=>{
+      if(tab==='bookmarks') await fetch('/api/bookmarks/'+x.dataset.id, {method:'DELETE'});
+      load(tab);
+    }));
+  }
+  tabs.forEach(t=>t.addEventListener('click', ()=>load(t.dataset.tab)));
+  load('bookmarks');
+</script>
+</body></html>
+"""
+
+
+@app.route("/library")
+@login_required
+def library():
+    return render_template_string(LIBRARY_HTML)
 
 
 # ---------------------------------------------------------------- Home page
