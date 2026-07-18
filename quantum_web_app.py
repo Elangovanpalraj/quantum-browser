@@ -22,7 +22,7 @@ DEPLOY (Render.com free tier - recommended):
     2. render.com la sign up pannunga (free).
     3. "New +" -> "Web Service" -> connect your GitHub repo.
     4. Build command:  pip install -r requirements.txt
-       Start command:  gunicorn quantum_web_app:app
+       Start command:  gunicorn quantum_web_app:app --bind 0.0.0.0:$PORT
     5. Environment tab la add pannunga:
          GROQ_API_KEY   = your groq key
          SECRET_KEY     = edhavadhu random secret string
@@ -187,7 +187,78 @@ AUTH_HTML = """<!DOCTYPE html>
     {% else %}
       <div class="switch">New here? <a href="/signup">Create an account</a></div>
     {% endif %}
+    <div class="switch" style="margin-top:10px;"><a href="/download">⬇ Download Desktop App</a></div>
   </div>
+</body></html>
+"""
+
+
+GITHUB_RELEASE_URL = "https://github.com/Elangovanpalraj/quantum-browser/releases/download/v1.0/QuantumBrowser.exe"
+
+DOWNLOAD_HTML = """<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Download Quantum Browser</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{ --bg:#0b0d10; --panel:#15181c; --panel2:#1c2025; --border:#2a2e34;
+    --text:#eceef1; --dim:#8b9099; --violet:#7c6cff; --cyan:#5ee8d5; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{ background:radial-gradient(1200px 700px at 50% -10%, #171a20 0%, var(--bg) 55%);
+    color:var(--text); font-family:'Segoe UI',sans-serif; min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; padding:60px 24px; }
+  .logo{ width:76px; height:76px; border-radius:20px; background:#0b0d10;
+    display:flex; align-items:center; justify-content:center; margin-bottom:20px;
+    border:1px solid var(--border); }
+  h1{ font-size:32px; margin-bottom:8px;
+    background:linear-gradient(135deg,#d8dbe0,var(--violet),var(--cyan));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  p.sub{ color:var(--dim); font-size:15px; margin-bottom:36px; text-align:center; max-width:480px; }
+  .download-card{ background:var(--panel); border:1px solid var(--border); border-radius:16px;
+    padding:32px; width:100%; max-width:420px; text-align:center; }
+  .download-btn{ display:inline-block; width:100%; background:linear-gradient(135deg,var(--violet),var(--cyan));
+    color:#0b0d10; text-decoration:none; font-weight:700; padding:16px; border-radius:12px;
+    font-size:16px; margin-top:10px; }
+  .meta{ color:var(--dim); font-size:12.5px; margin-top:14px; }
+  .steps{ margin-top:40px; max-width:480px; width:100%; }
+  .steps h2{ font-size:15px; color:var(--dim); margin-bottom:14px; font-weight:600;
+    text-transform:uppercase; letter-spacing:.05em; }
+  .step{ display:flex; gap:12px; padding:12px 0; border-top:1px solid var(--border); font-size:14px; }
+  .step .n{ width:24px; height:24px; border-radius:50%; background:var(--panel2);
+    display:flex; align-items:center; justify-content:center; font-size:12px;
+    color:var(--cyan); flex-shrink:0; font-weight:700; }
+  a.back{ color:var(--dim); text-decoration:none; font-size:13px; margin-top:30px; }
+</style></head>
+<body>
+  <div class="logo">
+    <svg width="44" height="44" viewBox="0 0 100 100">
+      <defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f4f5f7"/><stop offset="100%" stop-color="#8b909a"/></linearGradient>
+      <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7c6cff"/><stop offset="100%" stop-color="#5ee8d5"/></linearGradient></defs>
+      <circle cx="48" cy="48" r="30" fill="none" stroke="url(#g1)" stroke-width="13"/>
+      <line x1="66" y1="66" x2="80" y2="80" stroke="url(#g1)" stroke-width="10" stroke-linecap="round"/>
+      <path d="M10 62 Q48 78 92 50" fill="none" stroke="url(#g2)" stroke-width="4.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <h1>Download Quantum Browser</h1>
+  <p class="sub">Real browsing engine, built-in Quantum AI chat, and a fast home page — free for Windows.</p>
+
+  <div class="download-card">
+    <div style="font-weight:700; font-size:18px;">Quantum Browser for Windows</div>
+    <div class="meta">Version 1.0 &middot; Windows 10/11 (64-bit)</div>
+    <a class="download-btn" href="{{ download_url }}">⬇ Download for Windows</a>
+    <div class="meta">~110 MB &middot; .exe file</div>
+  </div>
+
+  <div class="steps">
+    <h2>How to install</h2>
+    <div class="step"><span class="n">1</span> Click "Download for Windows" above.</div>
+    <div class="step"><span class="n">2</span> Open the downloaded QuantumBrowser.exe file.</div>
+    <div class="step"><span class="n">3</span> Windows may show a SmartScreen warning since this is a new app — click "More info" &rarr; "Run anyway".</div>
+    <div class="step"><span class="n">4</span> Quantum Browser opens directly — no installer wizard needed.</div>
+    <div class="step"><span class="n">5</span> (Optional) Drag the .exe to your Desktop for quick access anytime.</div>
+  </div>
+
+  <a class="back" href="/">&larr; Back to Quantum</a>
 </body></html>
 """
 
@@ -235,6 +306,90 @@ def login():
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
+
+# ---------------------------------------------------------------- Download page
+GITHUB_RELEASE_URL = os.environ.get(
+    "DOWNLOAD_URL",
+    "https://github.com/Elangovanpalraj/quantum-browser/releases/latest"
+)
+
+DOWNLOAD_HTML = """<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Download Quantum Browser</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{ --bg:#0b0d10; --panel:#15181c; --panel2:#1c2025; --border:#2a2e34;
+    --text:#eceef1; --dim:#8b9099; --violet:#7c6cff; --cyan:#5ee8d5; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{ background:radial-gradient(1200px 700px at 50% -10%, #171a20 0%, var(--bg) 55%);
+    color:var(--text); font-family:'Segoe UI',sans-serif; min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; padding:60px 20px; }
+  .logo{ width:64px; height:64px; border-radius:16px; background:#0b0d10;
+    display:flex; align-items:center; justify-content:center; margin-bottom:18px;
+    border:1px solid var(--border); }
+  h1{ font-size:32px; margin-bottom:8px;
+    background:linear-gradient(135deg,#d8dbe0,var(--violet),var(--cyan));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  p.sub{ color:var(--dim); font-size:14px; margin-bottom:36px; text-align:center; max-width:480px; }
+  .download-btn{ display:inline-flex; align-items:center; gap:10px;
+    background:linear-gradient(135deg,var(--violet),var(--cyan)); color:#0b0d10;
+    text-decoration:none; font-weight:700; font-size:16px; padding:16px 32px;
+    border-radius:14px; margin-bottom:48px; }
+  .steps{ width:100%; max-width:520px; background:var(--panel); border:1px solid var(--border);
+    border-radius:16px; padding:28px 32px; }
+  .steps h2{ font-size:15px; margin-bottom:18px; color:var(--dim); text-transform:uppercase;
+    letter-spacing:.06em; }
+  .step{ display:flex; gap:14px; margin-bottom:18px; }
+  .step:last-child{ margin-bottom:0; }
+  .num{ width:26px; height:26px; border-radius:50%; background:var(--panel2);
+    border:1px solid var(--border); display:flex; align-items:center; justify-content:center;
+    font-size:12.5px; font-weight:700; color:var(--cyan); flex-shrink:0; }
+  .step-text{ font-size:13.5px; line-height:1.6; color:var(--text); }
+  .step-text b{ color:var(--cyan); }
+  .back{ margin-top:32px; color:var(--dim); font-size:13px; text-decoration:none; }
+  .back:hover{ color:var(--text); }
+  .note{ margin-top:20px; font-size:12px; color:var(--dim); text-align:center; max-width:480px; }
+</style></head>
+<body>
+  <div class="logo">
+    <svg width="34" height="34" viewBox="0 0 100 100">
+      <defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#f4f5f7"/><stop offset="100%" stop-color="#8b909a"/>
+      </linearGradient></defs>
+      <circle cx="48" cy="48" r="30" fill="none" stroke="url(#g)" stroke-width="13"/>
+      <line x1="66" y1="66" x2="80" y2="80" stroke="url(#g)" stroke-width="10" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <h1>Quantum Browser</h1>
+  <p class="sub">Real browsing engine + built-in Quantum AI — free desktop app for Windows.</p>
+
+  <a class="download-btn" href="{{ download_url }}">⬇ Download for Windows</a>
+
+  <div class="steps">
+    <h2>Install Steps</h2>
+    <div class="step"><div class="num">1</div>
+      <div class="step-text">Above button click பண்ணி <b>QuantumBrowser.exe</b> download பண்ணு.</div></div>
+    <div class="step"><div class="num">2</div>
+      <div class="step-text">Downloads folder-ல இருந்து <b>Desktop</b>-க்கு copy பண்ணு.</div></div>
+    <div class="step"><div class="num">3</div>
+      <div class="step-text">Double-click பண்ணு open பண்ணு — "Windows protected your PC" வந்தா,
+        <b>"More info" → "Run anyway"</b> click பண்ணு (unsigned free app-க்கு இது normal).</div></div>
+    <div class="step"><div class="num">4</div>
+      <div class="step-text">Quantum Browser window open ஆகும் — Google/YouTube search பண்ணு,
+        Quantum AI chat பண்ணு பாரு!</div></div>
+  </div>
+
+  <p class="note">இது ஒரு free, personal project. Antivirus warning வந்தா, unsigned .exe file-க்கு
+    common-ஆ இது நடக்கும் — கவலைப்பட வேண்டாம்.</p>
+
+  <a class="back" href="/">&larr; Back to Quantum</a>
+</body></html>
+"""
+
+
+@app.route("/download")
+def download():
+    return render_template_string(DOWNLOAD_HTML, download_url=GITHUB_RELEASE_URL)
 
 
 # ---------------------------------------------------------------- Home page
