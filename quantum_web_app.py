@@ -630,7 +630,7 @@ AI_PAGE_HTML = """<!DOCTYPE html>
     --text:#eceef1; --dim:#8b9099; --violet:#7c6cff; --cyan:#5ee8d5; }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{ background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif;
-    height:100vh; display:flex; flex-direction:column; }
+    height:100vh; display:flex; flex-direction:column; overflow:hidden; }
   header{ padding:16px 24px; border-bottom:1px solid var(--border); display:flex;
     align-items:center; gap:10px; background:linear-gradient(180deg,#101317,#0d0f13); }
   header .dot{ width:10px;height:10px;border-radius:50%;
@@ -638,6 +638,8 @@ AI_PAGE_HTML = """<!DOCTYPE html>
   header h1{ font-size:16px; font-weight:600; }
   header a{ margin-left:auto; color:var(--dim); font-size:13px; text-decoration:none; }
   header a:hover{ color:var(--text); }
+  .workspace{ flex:1; display:flex; min-height:0; }
+  .chat-col{ flex:1; display:flex; flex-direction:column; min-width:0; transition:flex .25s ease; }
   #chat{ flex:1; overflow-y:auto; padding:24px; display:flex; flex-direction:column; gap:14px; }
   .bubble{ max-width:70%; padding:12px 16px; border-radius:14px; font-size:14px;
     line-height:1.5; white-space:pre-wrap; }
@@ -670,19 +672,69 @@ AI_PAGE_HTML = """<!DOCTYPE html>
   #plusMenu .item{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px;
     cursor:pointer; font-size:13.5px; color:var(--text); }
   #plusMenu .item:hover{ background:var(--panel); }
+  .code-block{ margin-top:8px; background:#0d0f13; border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  .code-head{ display:flex; align-items:center; justify-content:space-between; padding:8px 12px;
+    background:#181b20; font-size:11.5px; color:var(--dim); }
+  .code-head .lang{ text-transform:uppercase; letter-spacing:.04em; font-weight:700; color:var(--cyan); }
+  .code-head .actions{ display:flex; gap:8px; }
+  .code-head button{ background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    font-size:11px; padding:4px 10px; border-radius:6px; cursor:pointer; }
+  .code-head button:hover{ background:#23272d; }
+  .code-block pre{ margin:0; padding:14px; overflow-x:auto; font-family:Consolas,Menlo,monospace;
+    font-size:12.5px; line-height:1.5; color:#d8dbe0; white-space:pre; }
+  .open-panel-btn{ background:var(--panel2); color:var(--cyan); border:1px solid var(--border);
+    font-size:11.5px; padding:4px 10px; border-radius:6px; cursor:pointer; margin-left:8px; }
+
+  /* ---- Right-side code / artifact panel ---- */
+  #artifactPanel{ width:0; overflow:hidden; border-left:1px solid var(--border);
+    background:#0d0f13; display:flex; flex-direction:column; transition:width .25s ease; flex-shrink:0; }
+  #artifactPanel.open{ width:46%; min-width:340px; }
+  .art-head{ display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid var(--border);
+    background:#101317; }
+  .art-head .ai-title{ font-size:13.5px; font-weight:700; }
+  .art-head .ai-lang{ font-size:11px; color:var(--cyan); background:var(--panel2); padding:3px 9px;
+    border-radius:999px; border:1px solid var(--border); }
+  .art-head .close-btn{ margin-left:auto; background:none; border:none; color:var(--dim); font-size:18px;
+    cursor:pointer; padding:0 4px; }
+  .art-tabs{ display:flex; gap:6px; padding:8px 14px 0; }
+  .art-tab{ padding:6px 12px; border-radius:8px 8px 0 0; font-size:11.5px; color:var(--dim);
+    background:var(--panel2); cursor:pointer; border:1px solid var(--border); border-bottom:none; }
+  .art-tab.active{ color:var(--cyan); background:#0d0f13; }
+  .art-body{ flex:1; overflow:auto; padding:16px 18px; font-family:Consolas,Menlo,monospace;
+    font-size:12.5px; line-height:1.6; color:#d8dbe0; white-space:pre; }
+  .art-footer{ padding:12px 18px; border-top:1px solid var(--border); display:flex; gap:10px; }
+  .art-footer button{ flex:1; font-size:13px; }
+  .art-footer .secondary{ background:var(--panel2); color:var(--text); border:1px solid var(--border); }
 </style></head>
 <body>
   <header><span class="dot"></span><h1>Quantum AI</h1><a href="/">&larr; Back to Quantum</a></header>
-  <div id="chat"></div>
-  <div id="attach-chip"><span>📎</span><img id="chip-img" style="display:none"><span id="chip-name"></span>
-    <span class="x" id="chip-remove">✕</span></div>
-  <form id="f">
-    <button type="button" class="icon-btn" id="plusBtn" title="Add">＋</button>
-    <div id="plusMenu"><div class="item" id="menuAddFile">📎 &nbsp;Add files or photos</div></div>
-    <input type="file" id="fileInput" style="display:none" accept=".png,.jpg,.jpeg,.gif,.bmp,.webp,.pdf,.csv,.txt,.md">
-    <input type="text" id="msg" placeholder="Ask Quantum AI anything..." autocomplete="off">
-    <button type="submit" id="sendBtn">Send</button>
-  </form>
+  <div class="workspace">
+    <div class="chat-col">
+      <div id="chat"></div>
+      <div id="attach-chip"><span>📎</span><img id="chip-img" style="display:none"><span id="chip-name"></span>
+        <span class="x" id="chip-remove">✕</span></div>
+      <form id="f">
+        <button type="button" class="icon-btn" id="plusBtn" title="Add">＋</button>
+        <div id="plusMenu"><div class="item" id="menuAddFile">📎 &nbsp;Add files or photos</div></div>
+        <input type="file" id="fileInput" style="display:none" accept=".png,.jpg,.jpeg,.gif,.bmp,.webp,.pdf,.csv,.txt,.md,.docx,.pptx,.py,.js,.ts,.java,.c,.cpp,.cs,.go,.rb,.php,.html,.css,.json,.xml,.sql,.sh">
+        <input type="text" id="msg" placeholder="Ask Quantum AI anything..." autocomplete="off">
+        <button type="submit" id="sendBtn">Send</button>
+      </form>
+    </div>
+    <div id="artifactPanel">
+      <div class="art-head">
+        <span class="ai-title" id="artTitle">quantum_code</span>
+        <span class="ai-lang" id="artLang">TXT</span>
+        <button class="close-btn" id="artClose">✕</button>
+      </div>
+      <div class="art-tabs" id="artTabs"></div>
+      <div class="art-body" id="artBody"></div>
+      <div class="art-footer">
+        <button class="secondary" id="artCopy">📋 Copy</button>
+        <button id="artDownload">⬇ Download File</button>
+      </div>
+    </div>
+  </div>
 <script>
   const chatEl=document.getElementById('chat'),form=document.getElementById('f'),input=document.getElementById('msg');
   const sendBtn=document.getElementById('sendBtn'),plusBtn=document.getElementById('plusBtn');
@@ -690,15 +742,91 @@ AI_PAGE_HTML = """<!DOCTYPE html>
   const fileInput=document.getElementById('fileInput'),chip=document.getElementById('attach-chip');
   const chipImg=document.getElementById('chip-img'),chipName=document.getElementById('chip-name');
   const chipRemove=document.getElementById('chip-remove');
+  const artifactPanel=document.getElementById('artifactPanel'),artTitle=document.getElementById('artTitle');
+  const artLang=document.getElementById('artLang'),artBody=document.getElementById('artBody');
+  const artTabs=document.getElementById('artTabs'),artClose=document.getElementById('artClose');
+  const artCopy=document.getElementById('artCopy'),artDownload=document.getElementById('artDownload');
+  let artifacts=[]; // {lang, ext, code}
   let attachedPreviewB64=null;
   plusBtn.addEventListener('click',e=>{e.stopPropagation();plusMenu.classList.toggle('show');});
   document.addEventListener('click',()=>plusMenu.classList.remove('show'));
   menuAddFile.addEventListener('click',()=>{plusMenu.classList.remove('show');fileInput.click();});
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  const EXT_MAP = {python:'py',py:'py',javascript:'js',js:'js',typescript:'ts',ts:'ts',java:'java',
+    c:'c',cpp:'cpp','c++':'cpp',csharp:'cs',cs:'cs',go:'go',ruby:'rb',rb:'rb',php:'php',
+    html:'html',css:'css',json:'json',xml:'xml',sql:'sql',bash:'sh',sh:'sh',shell:'sh',yaml:'yaml',
+    text:'txt','':'txt'};
+
+  function openArtifact(i){
+    if(!artifacts.length) return;
+    artifactPanel.classList.add('open');
+    artTabs.innerHTML='';
+    artifacts.forEach((a,idx)=>{
+      const t=document.createElement('div'); t.className='art-tab'+(idx===i?' active':'');
+      t.textContent=(a.lang||'code')+' #'+(idx+1); t.addEventListener('click',()=>openArtifact(idx));
+      artTabs.appendChild(t);
+    });
+    const a=artifacts[i];
+    artTitle.textContent='quantum_code_'+(i+1)+'.'+a.ext;
+    artLang.textContent=(a.lang||'code').toUpperCase();
+    artBody.textContent=a.code;
+    artCopy.onclick=()=>{navigator.clipboard.writeText(a.code);artCopy.textContent='✅ Copied';
+      setTimeout(()=>artCopy.textContent='📋 Copy',1500);};
+    artDownload.onclick=()=>{
+      const blob=new Blob([a.code],{type:'text/plain'});
+      const link=document.createElement('a'); link.href=URL.createObjectURL(blob);
+      link.download='quantum_code_'+(i+1)+'.'+a.ext; link.click();
+    };
+  }
+  artClose.addEventListener('click',()=>artifactPanel.classList.remove('open'));
+
   function addBubble(text,who,imgB64){
     const d=document.createElement('div');d.className='bubble '+who;
     if(imgB64){const img=document.createElement('img');img.src='data:image/png;base64,'+imgB64;d.appendChild(img);}
-    const t=document.createElement('div');t.textContent=text;d.appendChild(t);
+    if(who.indexOf('bot')===0 && text.indexOf('```')!==-1){
+      renderWithCodeBlocks(d, text);
+    } else {
+      const t=document.createElement('div');t.textContent=text;d.appendChild(t);
+    }
     chatEl.appendChild(d);chatEl.scrollTop=chatEl.scrollHeight;return d;
+  }
+  function renderWithCodeBlocks(container, text){
+    const re=/```(\w*)\n([\s\S]*?)```/g;
+    let last=0, m;
+    while((m=re.exec(text))!==null){
+      if(m.index>last){
+        const p=document.createElement('div'); p.textContent=text.slice(last,m.index); container.appendChild(p);
+      }
+      const lang=(m[1]||'text').toLowerCase(), code=m[2];
+      const ext=EXT_MAP[lang]||'txt';
+      const artIndex=artifacts.length; artifacts.push({lang,ext,code});
+      const block=document.createElement('div'); block.className='code-block';
+      const head=document.createElement('div'); head.className='code-head';
+      head.innerHTML=`<span class="lang">${lang||'code'}</span><span class="actions">
+        <button type="button" class="copy-btn">📋 Copy</button>
+        <button type="button" class="dl-btn">⬇ Download</button>
+        <button type="button" class="open-panel-btn">🗔 Open panel</button></span>`;
+      const preview=document.createElement('pre');
+      const lines=code.split('\\n'); preview.textContent=lines.slice(0,6).join('\\n')+(lines.length>6?'\\n...':'');
+      block.appendChild(head); block.appendChild(preview); container.appendChild(block);
+      head.querySelector('.copy-btn').addEventListener('click',()=>{
+        navigator.clipboard.writeText(code);
+        const b=head.querySelector('.copy-btn'); b.textContent='✅ Copied'; setTimeout(()=>b.textContent='📋 Copy',1500);
+      });
+      head.querySelector('.dl-btn').addEventListener('click',()=>{
+        const blob=new Blob([code],{type:'text/plain'});
+        const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+        a.download=`quantum_code_${artIndex+1}.${ext}`; a.click();
+      });
+      head.querySelector('.open-panel-btn').addEventListener('click',()=>openArtifact(artIndex));
+      last=re.lastIndex;
+    }
+    if(last<text.length){
+      const p=document.createElement('div'); p.textContent=text.slice(last); container.appendChild(p);
+    }
+    if(artifacts.length) openArtifact(artifacts.length-1);
   }
   addBubble('வணக்கம்! நான் Quantum AI. என்ன உதவி வேணும்? 😊','bot');
   function showChip(name,b64){chip.classList.add('show');chipName.textContent=name;
@@ -722,8 +850,13 @@ AI_PAGE_HTML = """<!DOCTYPE html>
     sendBtn.disabled=true;const loadingBubble=addBubble('typing...','bot loading');
     try{
       const res=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})});
-      const data=await res.json();loadingBubble.textContent=data.reply||'[No response]';loadingBubble.classList.remove('loading');
-    }catch(err){loadingBubble.textContent='[Connection error: '+err+']';loadingBubble.classList.remove('loading');}
+      const data=await res.json();
+      loadingBubble.classList.remove('loading','bot');loadingBubble.remove();
+      addBubble(data.reply||'[No response]','bot');
+    }catch(err){
+      loadingBubble.classList.remove('loading');
+      loadingBubble.textContent='[Connection error: '+err+']';
+    }
     sendBtn.disabled=false;input.focus();
   });
 </script>
