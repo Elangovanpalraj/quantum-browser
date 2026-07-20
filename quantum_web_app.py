@@ -578,12 +578,12 @@ LIBRARY_HTML = """<!DOCTYPE html>
     items.forEach((it,i)=>{
       const c=document.createElement('div'); c.className='card'; c.style.setProperty('--i',i);
       if(tab==='searches'){
-        c.innerHTML = `<div class="t">${it.query}</div><div class="d">${it.created_at}</div>
-          <span class="x" data-id="${it.id}">✕</span>`;
+        c.innerHTML = '<div class="t">'+it.query+'</div><div class="d">'+it.created_at+'</div>'+
+          '<span class="x" data-id="'+it.id+'">\u2715</span>';
       } else {
         const dateField = tab==='bookmarks' ? it.created_at : it.visited_at;
-        c.innerHTML = `<div class="t">${it.title}</div><a class="u" href="${it.url}" target="_blank">${it.url}</a>
-          <div class="d">${dateField}</div><span class="x" data-id="${it.id}">✕</span>`;
+        c.innerHTML = '<div class="t">'+it.title+'</div><a class="u" href="'+it.url+'" target="_blank">'+it.url+'</a>'+
+          '<div class="d">'+dateField+'</div><span class="x" data-id="'+it.id+'">\u2715</span>';
       }
       grid.appendChild(c);
     });
@@ -782,10 +782,12 @@ AI_PAGE_HTML = """<!DOCTYPE html>
   }
   artClose.addEventListener('click',()=>artifactPanel.classList.remove('open'));
 
+  const BT = String.fromCharCode(96); // backtick character, built safely to survive copy-paste
+  const FENCE = BT + BT + BT;
   function addBubble(text,who,imgB64){
     const d=document.createElement('div');d.className='bubble '+who;
     if(imgB64){const img=document.createElement('img');img.src='data:image/png;base64,'+imgB64;d.appendChild(img);}
-    if(who.indexOf('bot')===0 && text.indexOf('```')!==-1){
+    if(who.indexOf('bot')===0 && text.indexOf(FENCE)!==-1){
       renderWithCodeBlocks(d, text);
     } else {
       const t=document.createElement('div');t.textContent=text;d.appendChild(t);
@@ -793,7 +795,7 @@ AI_PAGE_HTML = """<!DOCTYPE html>
     chatEl.appendChild(d);chatEl.scrollTop=chatEl.scrollHeight;return d;
   }
   function renderWithCodeBlocks(container, text){
-    const re=/```(\w*)\n([\s\S]*?)```/g;
+    const re = new RegExp(FENCE + "(\\w*)\\n([\\s\\S]*?)" + FENCE, "g");
     let last=0, m;
     while((m=re.exec(text))!==null){
       if(m.index>last){
@@ -804,10 +806,10 @@ AI_PAGE_HTML = """<!DOCTYPE html>
       const artIndex=artifacts.length; artifacts.push({lang,ext,code});
       const block=document.createElement('div'); block.className='code-block';
       const head=document.createElement('div'); head.className='code-head';
-      head.innerHTML=`<span class="lang">${lang||'code'}</span><span class="actions">
-        <button type="button" class="copy-btn">📋 Copy</button>
-        <button type="button" class="dl-btn">⬇ Download</button>
-        <button type="button" class="open-panel-btn">🗔 Open panel</button></span>`;
+      head.innerHTML='<span class="lang">'+(lang||'code')+'</span><span class="actions">'+
+        '<button type="button" class="copy-btn">\uD83D\uDCCB Copy</button>'+
+        '<button type="button" class="dl-btn">\u2B07 Download</button>'+
+        '<button type="button" class="open-panel-btn">\uD83D\uDDD4 Open panel</button></span>';
       const preview=document.createElement('pre');
       const lines=code.split('\\n'); preview.textContent=lines.slice(0,6).join('\\n')+(lines.length>6?'\\n...':'');
       block.appendChild(head); block.appendChild(preview); container.appendChild(block);
@@ -818,7 +820,7 @@ AI_PAGE_HTML = """<!DOCTYPE html>
       head.querySelector('.dl-btn').addEventListener('click',()=>{
         const blob=new Blob([code],{type:'text/plain'});
         const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-        a.download=`quantum_code_${artIndex+1}.${ext}`; a.click();
+        a.download='quantum_code_'+(artIndex+1)+'.'+ext; a.click();
       });
       head.querySelector('.open-panel-btn').addEventListener('click',()=>openArtifact(artIndex));
       last=re.lastIndex;
