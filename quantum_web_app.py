@@ -176,7 +176,7 @@ def login_required(view):
 
 # ---------------------------------------------------------------- Auth pages
 AUTH_HTML = """<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Quantum — {{ mode }}</title>
+<html><head><meta charset="UTF-8"><title>Quantum - {{ mode }}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
   :root{ --bg:#0b0d10; --panel:#15181c; --panel2:#1c2025; --border:#2a2e34;
@@ -218,7 +218,7 @@ AUTH_HTML = """<!DOCTYPE html>
     {% else %}
       <div class="switch">New here? <a href="/signup">Create an account</a></div>
     {% endif %}
-    <div class="switch" style="margin-top:10px;"><a href="/download">⬇ Download Desktop App</a></div>
+    <div class="switch" style="margin-top:10px;"><a href="/download">[Download] Download Desktop App</a></div>
   </div>
 </body></html>
 """
@@ -271,12 +271,12 @@ DOWNLOAD_HTML = """<!DOCTYPE html>
     </svg>
   </div>
   <h1>Download Quantum Browser</h1>
-  <p class="sub">Real browsing engine, built-in Quantum AI chat, and a fast home page — free for Windows.</p>
+  <p class="sub">Real browsing engine, built-in Quantum AI chat, and a fast home page - free for Windows.</p>
 
   <div class="download-card">
     <div style="font-weight:700; font-size:18px;">Quantum Browser for Windows</div>
     <div class="meta">Version 1.0 &middot; Windows 10/11 (64-bit)</div>
-    <a class="download-btn" href="{{ download_url }}">⬇ Download for Windows</a>
+    <a class="download-btn" href="{{ download_url }}">[Download] Download for Windows</a>
     <div class="meta">~110 MB &middot; .exe file</div>
   </div>
 
@@ -284,8 +284,8 @@ DOWNLOAD_HTML = """<!DOCTYPE html>
     <h2>How to install</h2>
     <div class="step"><span class="n">1</span> Click "Download for Windows" above.</div>
     <div class="step"><span class="n">2</span> Open the downloaded QuantumBrowser.exe file.</div>
-    <div class="step"><span class="n">3</span> Windows may show a SmartScreen warning since this is a new app — click "More info" &rarr; "Run anyway".</div>
-    <div class="step"><span class="n">4</span> Quantum Browser opens directly — no installer wizard needed.</div>
+    <div class="step"><span class="n">3</span> Windows may show a SmartScreen warning since this is a new app - click "More info" &rarr; "Run anyway".</div>
+    <div class="step"><span class="n">4</span> Quantum Browser opens directly - no installer wizard needed.</div>
     <div class="step"><span class="n">5</span> (Optional) Drag the .exe to your Desktop for quick access anytime.</div>
   </div>
 
@@ -392,9 +392,9 @@ DOWNLOAD_HTML = """<!DOCTYPE html>
     </svg>
   </div>
   <h1>Quantum Browser</h1>
-  <p class="sub">Real browsing engine + built-in Quantum AI — free desktop app for Windows.</p>
+  <p class="sub">Real browsing engine + built-in Quantum AI - free desktop app for Windows.</p>
 
-  <a class="download-btn" href="{{ download_url }}">⬇ Download for Windows</a>
+  <a class="download-btn" href="{{ download_url }}">[Download] Download for Windows</a>
 
   <div class="steps">
     <h2>Install Steps</h2>
@@ -403,15 +403,15 @@ DOWNLOAD_HTML = """<!DOCTYPE html>
     <div class="step"><div class="num">2</div>
       <div class="step-text">Downloads folder-ல இருந்து <b>Desktop</b>-க்கு copy பண்ணு.</div></div>
     <div class="step"><div class="num">3</div>
-      <div class="step-text">Double-click பண்ணு open பண்ணு — "Windows protected your PC" வந்தா,
-        <b>"More info" → "Run anyway"</b> click பண்ணு (unsigned free app-க்கு இது normal).</div></div>
+      <div class="step-text">Double-click பண்ணு open பண்ணு - "Windows protected your PC" வந்தா,
+        <b>"More info" -> "Run anyway"</b> click பண்ணு (unsigned free app-க்கு இது normal).</div></div>
     <div class="step"><div class="num">4</div>
-      <div class="step-text">Quantum Browser window open ஆகும் — Google/YouTube search பண்ணு,
+      <div class="step-text">Quantum Browser window open ஆகும் - Google/YouTube search பண்ணு,
         Quantum AI chat பண்ணு பாரு!</div></div>
   </div>
 
   <p class="note">இது ஒரு free, personal project. Antivirus warning வந்தா, unsigned .exe file-க்கு
-    common-ஆ இது நடக்கும் — கவலைப்பட வேண்டாம்.</p>
+    common-ஆ இது நடக்கும் - கவலைப்பட வேண்டாம்.</p>
 
   <a class="back" href="/">&larr; Back to Quantum</a>
 </body></html>
@@ -560,9 +560,9 @@ LIBRARY_HTML = """<!DOCTYPE html>
 <body>
   <header><span class="dot"></span><h1>Quantum Library</h1><a href="/">&larr; Back to Quantum</a></header>
   <div class="tabs">
-    <div class="tab active" data-tab="bookmarks">⭐ Bookmarks</div>
-    <div class="tab" data-tab="history">🕘 History</div>
-    <div class="tab" data-tab="searches">🔍 Saved Searches</div>
+    <div class="tab active" data-tab="bookmarks">[Bookmarks] Bookmarks</div>
+    <div class="tab" data-tab="history">[History] History</div>
+    <div class="tab" data-tab="searches">[Search] Saved Searches</div>
   </div>
   <div class="grid" id="grid"></div>
 <script>
@@ -711,11 +711,11 @@ AI_PAGE_HTML = """<!DOCTYPE html>
   <div class="workspace">
     <div class="chat-col">
       <div id="chat"></div>
-      <div id="attach-chip"><span>📎</span><img id="chip-img" style="display:none"><span id="chip-name"></span>
-        <span class="x" id="chip-remove">✕</span></div>
+      <div id="attach-chip"><span>[Attach]</span><img id="chip-img" style="display:none"><span id="chip-name"></span>
+        <span class="x" id="chip-remove">x</span></div>
       <form id="f">
-        <button type="button" class="icon-btn" id="plusBtn" title="Add">＋</button>
-        <div id="plusMenu"><div class="item" id="menuAddFile">📎 &nbsp;Add files or photos</div></div>
+        <button type="button" class="icon-btn" id="plusBtn" title="Add">+</button>
+        <div id="plusMenu"><div class="item" id="menuAddFile">[Attach] &nbsp;Add files or photos</div></div>
         <input type="file" id="fileInput" style="display:none" accept=".png,.jpg,.jpeg,.gif,.bmp,.webp,.pdf,.csv,.txt,.md,.docx,.pptx,.py,.js,.ts,.java,.c,.cpp,.cs,.go,.rb,.php,.html,.css,.json,.xml,.sql,.sh">
         <input type="text" id="msg" placeholder="Ask Quantum AI anything..." autocomplete="off">
         <button type="submit" id="sendBtn">Send</button>
@@ -725,13 +725,13 @@ AI_PAGE_HTML = """<!DOCTYPE html>
       <div class="art-head">
         <span class="ai-title" id="artTitle">quantum_code</span>
         <span class="ai-lang" id="artLang">TXT</span>
-        <button class="close-btn" id="artClose">✕</button>
+        <button class="close-btn" id="artClose">x</button>
       </div>
       <div class="art-tabs" id="artTabs"></div>
       <div class="art-body" id="artBody"></div>
       <div class="art-footer">
-        <button class="secondary" id="artCopy">📋 Copy</button>
-        <button id="artDownload">⬇ Download File</button>
+        <button class="secondary" id="artCopy">[Copy] Copy</button>
+        <button id="artDownload">[Download] Download File</button>
       </div>
     </div>
   </div>
@@ -772,8 +772,8 @@ AI_PAGE_HTML = """<!DOCTYPE html>
     artTitle.textContent='quantum_code_'+(i+1)+'.'+a.ext;
     artLang.textContent=(a.lang||'code').toUpperCase();
     artBody.textContent=a.code;
-    artCopy.onclick=()=>{navigator.clipboard.writeText(a.code);artCopy.textContent='✅ Copied';
-      setTimeout(()=>artCopy.textContent='📋 Copy',1500);};
+    artCopy.onclick=()=>{navigator.clipboard.writeText(a.code);artCopy.textContent='[OK] Copied';
+      setTimeout(()=>artCopy.textContent='[Copy] Copy',1500);};
     artDownload.onclick=()=>{
       const blob=new Blob([a.code],{type:'text/plain'});
       const link=document.createElement('a'); link.href=URL.createObjectURL(blob);
@@ -815,7 +815,7 @@ AI_PAGE_HTML = """<!DOCTYPE html>
       block.appendChild(head); block.appendChild(preview); container.appendChild(block);
       head.querySelector('.copy-btn').addEventListener('click',()=>{
         navigator.clipboard.writeText(code);
-        const b=head.querySelector('.copy-btn'); b.textContent='✅ Copied'; setTimeout(()=>b.textContent='📋 Copy',1500);
+        const b=head.querySelector('.copy-btn'); b.textContent='[OK] Copied'; setTimeout(()=>b.textContent='[Copy] Copy',1500);
       });
       head.querySelector('.dl-btn').addEventListener('click',()=>{
         const blob=new Blob([code],{type:'text/plain'});
@@ -830,7 +830,7 @@ AI_PAGE_HTML = """<!DOCTYPE html>
     }
     if(artifacts.length) openArtifact(artifacts.length-1);
   }
-  addBubble('வணக்கம்! நான் Quantum AI. என்ன உதவி வேணும்? 😊','bot');
+  addBubble('வணக்கம்! நான் Quantum AI. என்ன உதவி வேணும்? :)','bot');
   function showChip(name,b64){chip.classList.add('show');chipName.textContent=name;
     if(b64){chipImg.src='data:image/png;base64,'+b64;chipImg.style.display='block';}else{chipImg.style.display='none';}}
   function hideChip(){chip.classList.remove('show');attachedPreviewB64=null;}
